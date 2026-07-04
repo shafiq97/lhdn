@@ -109,7 +109,7 @@ Set these as environment variables (see `deploy/docker-compose.yml` or `deploy/k
 
 **Token caching with single-flight refresh** — `TokenService` performs the OAuth2 client-credentials flow against `connect/token`, caches the access token in memory, and proactively refreshes it 5 minutes before expiry. Concurrent callers needing a fresh token share a single in-flight refresh rather than each firing their own request.
 
-**Resilience pipeline** — the typed MyInvois HTTP client is wrapped with Polly: retry with exponential backoff and jitter on 5xx/timeouts (3 attempts), no retry on 4xx, and a circuit breaker that opens after 5 consecutive failures.
+**Resilience pipeline** — Retries with exponential backoff and a circuit breaker are provided by `Microsoft.Extensions.Http.Resilience`'s standard resilience handler defaults.
 
 **Error handling**
 
@@ -141,7 +141,7 @@ Manifests live in `deploy/k8s/`:
 kubectl apply -f deploy/k8s/
 ```
 
-This creates the `myinvois` namespace, a `ConfigMap` for non-secret configuration (`Lhdn__BaseUrl`), a `Secret` template (`lhdn-credentials`) holding `Lhdn__ClientId`/`Lhdn__ClientSecret`, plus `Deployment`/`Service` objects for both the API and MockLhdn, with readiness/liveness probes against `/health`. Replace the values in the `Secret` with real MyInvois credentials before pointing at production — never commit real secrets into the manifest.
+This creates the `myinvois` namespace, a `ConfigMap` for non-secret configuration (`Lhdn__BaseUrl`), a `Secret` template (`lhdn-credentials`) holding `Lhdn__ClientId`/`Lhdn__ClientSecret`, plus `Deployment`/`Service` objects for both the API and MockLhdn. The API deployment includes readiness/liveness probes against `/health`. Replace the values in the `Secret` with real MyInvois credentials before pointing at production — never commit real secrets into the manifest.
 
 ## Roadmap
 
