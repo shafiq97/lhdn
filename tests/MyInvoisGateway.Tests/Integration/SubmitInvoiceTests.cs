@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
 using MyInvoisGateway.Api.Contracts;
@@ -65,6 +66,35 @@ public class SubmitInvoiceTests : IClassFixture<ApiFixture>
         body.BuyerName = "Different Buyer";
         var response = await _client.SendAsync(Post(body, key));
         Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Concurrent_same_key_requests_never_surface_5xx()
+    {
+        var key = Guid.NewGuid().ToString();
+        var body = UblMapperTests.Sample();
+        body.InvoiceNumber = $"INV-{Guid.NewGuid():N}";
+
+        // Fire several parallel POSTs with the same Idempotency-Key and body. Both requests
+        // can pass the check-then-act read before either commits, so LHDN may see the
+        // invoice submitted more than once and the two responses may carry different
+        // SubmissionUids (known v1 limitation - no distributed lock/outbox). What must hold
+        // regardless of who wins the race is that neither request surfaces a raw 500 from
+        // the loser's primary-key violation on insert.
+        var tasks = Enumerable.Range(0, 5).Select(_ => _client.SendAsync(Post(body, key)));
+        var responses = await Task.WhenAll(tasks);
+
+        foreach (var response in responses)
+        {
+            Assert.True(
+                response.StatusCode is HttpStatusCode.OK or HttpStatusCode.Created,
+                $"Expected 200/201 but got {(int)response.StatusCode}");
+        }
+
+        // A subsequent request with the same key must replay cleanly (200), proving the
+        // idempotency record settled correctly after the race.
+        var replayResponse = await _client.SendAsync(Post(body, key));
+        Assert.Equal(HttpStatusCode.OK, replayResponse.StatusCode);
     }
 
     [Fact]

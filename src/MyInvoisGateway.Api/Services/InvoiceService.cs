@@ -51,7 +51,26 @@ public class InvoiceService(AppDbContext db, IMyInvoisClient lhdn, ILogger<Invoi
             RequestHash = requestHash,
             ResponseJson = JsonSerializer.Serialize(response),
         });
-        await db.SaveChangesAsync(ct);
+
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            // Two concurrent requests with the same Idempotency-Key both pass the initial
+            // FindAsync check (check-then-act race), both submit to LHDN, and then race to
+            // insert the IdempotencyRecord row. The loser hits a primary-key violation here.
+            // Known v1 limitation: without a distributed lock or an outbox, the LHDN-side
+            // duplicate submission in this race window is not prevented - we only ensure the
+            // HTTP response for the losing request is a clean replay/conflict instead of a 500.
+            db.ChangeTracker.Clear();
+            var winning = await db.IdempotencyRecords.FindAsync([idempotencyKey], ct);
+            if (winning is null) throw;
+            if (winning.RequestHash != requestHash) throw new IdempotencyConflictException();
+            return (JsonSerializer.Deserialize<InvoiceResponse>(winning.ResponseJson)!, true);
+        }
+
         log.LogInformation("Invoice {InvoiceNumber} submitted as {SubmissionUid}", invoice.InvoiceNumber, result.SubmissionUid);
         return (response, false);
     }
