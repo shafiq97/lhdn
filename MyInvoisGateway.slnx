@@ -1,9 +1,0 @@
-<Solution>
-  <Folder Name="/src/">
-    <Project Path="src/MockLhdn/MockLhdn.csproj" />
-    <Project Path="src/MyInvoisGateway.Api/MyInvoisGateway.Api.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/MyInvoisGateway.Tests/MyInvoisGateway.Tests.csproj" />
-  </Folder>
-</Solution>
