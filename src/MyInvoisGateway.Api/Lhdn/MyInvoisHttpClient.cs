@@ -38,7 +38,12 @@ public class MyInvoisHttpClient(HttpClient http, ITokenService tokens) : IMyInvo
                 .ToArray();
             throw new LhdnApiException(422, errors);
         }
-        var accepted = body.RootElement.GetProperty("acceptedDocuments")[0];
+        var acceptedDocuments = body.RootElement.GetProperty("acceptedDocuments");
+        if (acceptedDocuments.GetArrayLength() == 0)
+        {
+            throw new LhdnApiException(502, ["LHDN returned no accepted or rejected documents."]);
+        }
+        var accepted = acceptedDocuments[0];
         return new SubmissionResult(
             body.RootElement.GetProperty("submissionUid").GetString()!,
             accepted.GetProperty("uuid").GetString()!);

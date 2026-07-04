@@ -78,6 +78,21 @@ public class MyInvoisHttpClientTests
     }
 
     [Fact]
+    public async Task Submit_empty_accepted_and_rejected_throws_LhdnApiException()
+    {
+        var (client, _, _) = Make(_ => Json(HttpStatusCode.OK, new
+        {
+            submissionUid = "SUB123",
+            acceptedDocuments = Array.Empty<object>(),
+            rejectedDocuments = Array.Empty<object>(),
+        }));
+
+        var ex = await Assert.ThrowsAsync<LhdnApiException>(
+            () => client.SubmitDocumentAsync(Doc(), CancellationToken.None));
+        Assert.Contains("no accepted or rejected documents", ex.Errors[0]);
+    }
+
+    [Fact]
     public async Task Submit_400_throws_LhdnApiException_with_status()
     {
         var (client, _, _) = Make(_ => Json(HttpStatusCode.BadRequest, new
