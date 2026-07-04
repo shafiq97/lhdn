@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: mock-lhdn, namespace: myinvois }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: mock-lhdn } }
+  template:
+    metadata: { labels: { app: mock-lhdn } }
+    spec:
+      containers:
+        - name: mock-lhdn
+          image: myinvois/mock-lhdn:local
+          ports: [{ containerPort: 8081 }]
+          resources: { requests: { cpu: 50m, memory: 64Mi }, limits: { memory: 128Mi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: mock-lhdn, namespace: myinvois }
+spec:
+  selector: { app: mock-lhdn }
+  ports: [{ port: 8081, targetPort: 8081 }]
