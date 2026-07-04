@@ -1,0 +1,16 @@
+services:
+  mock-lhdn:
+    build: { context: .., dockerfile: src/MockLhdn/Dockerfile }
+    ports: ["8081:8081"]
+  api:
+    build: { context: .., dockerfile: src/MyInvoisGateway.Api/Dockerfile }
+    ports: ["8080:8080"]
+    environment:
+      Lhdn__BaseUrl: http://mock-lhdn:8081
+      Lhdn__ClientId: mock-client
+      Lhdn__ClientSecret: mock-secret
+      ConnectionStrings__Default: Data Source=/data/gateway.db
+    volumes: [gateway-data:/data]
+    depends_on: [mock-lhdn]
+volumes:
+  gateway-data:
