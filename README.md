@@ -1,6 +1,6 @@
 # MyInvois Gateway
 
-[![CI](https://github.com/Shafiq97/myinvois-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/Shafiq97/myinvois-gateway/actions/workflows/ci.yml)
+[![CI](https://github.com/shafiq97/lhdn/actions/workflows/ci.yml/badge.svg)](https://github.com/shafiq97/lhdn/actions/workflows/ci.yml)
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -21,6 +21,18 @@ flowchart LR
 - **MyInvoisGateway.Api** — ASP.NET Core 8 controller-based service; the deliverable.
 - **MockLhdn** — a minimal ASP.NET Core app imitating the parts of the MyInvois API surface the gateway calls (`connect/token`, `documentsubmissions`, status polling, cancel). Used for local dev and the offline demo; swap it out for the real sandbox via configuration only.
 - **SQLite** — file-based storage for invoice records and idempotency records, via EF Core.
+
+## Live demo
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/shafiq97/lhdn)
+
+A hosted demo runs on Render's free tier (API + mock LHDN as two services, defined in [`render.yaml`](render.yaml)):
+
+- **Swagger UI:** `https://myinvois-gateway-api.onrender.com/swagger`
+
+> Free-tier services sleep after 15 minutes idle — the first request can take ~50 seconds while the container cold-starts. The SQLite database is ephemeral and resets on redeploy, which keeps the demo self-cleaning.
+
+Try it: open Swagger, `POST /api/invoices` with the sample payload from the Quickstart below, then poll `GET /api/invoices/{id}` to watch the status move to `Accepted`. Submitting a seller TIN ending in `9` demonstrates the rejection path.
 
 ## Quickstart
 

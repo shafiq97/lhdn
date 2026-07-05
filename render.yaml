@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: myinvois-mock-lhdn
+    runtime: docker
+    plan: free
+    dockerfilePath: src/MockLhdn/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: ASPNETCORE_URLS
+        value: http://+:10000
+      - key: PORT
+        value: "10000"
+
+  - type: web
+    name: myinvois-gateway-api
+    runtime: docker
+    plan: free
+    dockerfilePath: src/MyInvoisGateway.Api/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: ASPNETCORE_URLS
+        value: http://+:10000
+      - key: PORT
+        value: "10000"
+      - key: Lhdn__BaseUrl
+        sync: false # set to the mock service URL after first deploy, e.g. https://myinvois-mock-lhdn.onrender.com
+      - key: Lhdn__ClientId
+        value: mock-client
+      - key: Lhdn__ClientSecret
+        value: mock-secret
+      - key: ConnectionStrings__Default
+        value: Data Source=/tmp/gateway.db
